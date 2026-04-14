@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "name": "Driver Tracker",
+    "slug": "driver-tracker",
+    "scheme": "drivertracker",
+    "platforms": ["ios", "android"],
+    "orientation": "portrait",
+    "extra": {
+      "apiUrl": "http://localhost:8000"
+    }
+  }
+}
