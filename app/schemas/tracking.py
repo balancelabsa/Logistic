@@ -15,6 +15,7 @@ class ShiftResponse(BaseModel):
 class LocationIn(BaseModel):
     latitude: float = Field(ge=-90, le=90)
     longitude: float = Field(ge=-180, le=180)
+    accuracy_meters: float | None = Field(default=None, ge=0)
     speed_kmh: float | None = Field(default=None, ge=0)
     captured_at: datetime
 

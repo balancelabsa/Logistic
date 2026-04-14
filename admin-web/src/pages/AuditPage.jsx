@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react'
-import axios from 'axios'
-
-const api = axios.create({ baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000' })
+import api from '../api/client'
 
 export default function AuditPage() {
   const [rows, setRows] = useState([])
@@ -13,11 +11,9 @@ export default function AuditPage() {
     <section>
       <h1>سجل التدقيق</h1>
       <table>
-        <thead><tr><th>الإجراء</th><th>نوع الكيان</th><th>المعرف</th><th>الوقت</th></tr></thead>
+        <thead><tr><th>الإجراء</th><th>النوع</th><th>الكيان</th><th>الوقت</th></tr></thead>
         <tbody>
-          {rows.map((r) => (
-            <tr key={r.id}><td>{r.action}</td><td>{r.entity_type}</td><td>{r.entity_id}</td><td>{r.created_at}</td></tr>
-          ))}
+          {rows.map((r) => <tr key={r.id}><td>{r.action}</td><td>{r.entity_type}</td><td>{r.entity_id}</td><td>{r.created_at}</td></tr>)}
         </tbody>
       </table>
     </section>

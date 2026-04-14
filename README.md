@@ -1,83 +1,103 @@
-# Logistic Platform (FastAPI + React + React Native Expo)
+# منصة لوجستيات المختبرات الطبية
 
-منصة لوجستية متكاملة لتتبع السائقين من **بدء الوردية** حتى **إنهائها** مع لوحة تحكم إدارية وتطبيق موبايل للسائقين.
+منصة تشغيل ومتابعة للسائقين بين الفروع ونقاط السحب والتسليم، مبنية على:
+- FastAPI (Backend)
+- React/Vite (لوحة الإدارة)
+- React Native Expo (تطبيق السائق)
+- PostgreSQL
 
-## 1) ما كان موجودًا سابقًا
-- Backend أساسي بـ FastAPI.
-- تسجيل/دخول بسيط.
-- رفع نقاط GPS دفعات.
+## ما هو المنفذ حاليًا
+- مصادقة JWT وصلاحيات (admin/dispatcher/driver)
+- بدء/إنهاء الوردية
+- تتبع GPS أثناء الوردية النشطة فقط
+- زيارات مخططة + وصول/مغادرة + ملاحظة + صورة إثبات
+- تنبيهات: تأخير/توقف طويل/انحراف/زيارة فائتة
+- إشعارات مباشرة للإدارة عبر polling
+- سجل تدقيق شامل للأحداث الحساسة
+- مسار السائق حسب التاريخ + كشف توقفات + Playback
+- تقرير PDF للمسار
+- واجهة عربية RTL للإدارة
 
-## 2) ما تم استكماله الآن
-- نموذج إنتاجي كامل: Users/Roles/Shifts/Visits/Alerts/Audit Logs.
-- RBAC (صلاحيات حسب الدور: Admin/Dispatcher/Driver).
-- تتبع GPS مرتبط فقط بالوردية النشطة.
-- إدارة الزيارات (Check-in / Check-out + GPS + وقت + ملاحظات).
-- Route history playback per driver/day.
-- تقارير تشغيلية + تنبيهات + سجل تدقيق.
-- Alembic migrations + seed script.
-- لوحة إدارة React عربية.
-- تطبيق سائق Expo (iOS/Android) مع background location tracking.
+## المتطلبات
+- Python 3.11+
+- Node 20+
+- Docker + Docker Compose
 
-## 3) هيكلة المشروع
-- `app/` FastAPI backend
-- `app/alembic/` database migrations
-- `admin-web/` React admin dashboard
-- `mobile-driver/` Expo mobile app for drivers
-- `scripts/seed_demo.py` demo seed data
+## متغيرات البيئة
+استخدم `.env.example`:
+- `DATABASE_URL`
+- `JWT_SECRET`
+- `VITE_API_URL`
+- `VITE_GOOGLE_MAPS_API_KEY`
+- `EXPO_PUBLIC_API_URL`
 
-## 4) تشغيل محلي سريع
-### Backend + DB + Admin Web
+## تشغيل Docker
 ```bash
 docker compose up --build -d
 ```
 
-### تشغيل المايجريشن
+## إعداد قاعدة البيانات
 ```bash
 docker compose exec api alembic upgrade head
-```
-
-### بيانات تجريبية
-```bash
 docker compose exec api python scripts/seed_demo.py
 ```
 
-### تشغيل تطبيق الموبايل
+## تشغيل الـ Backend محليًا
+```bash
+pip install -e .
+uvicorn app.main:app --reload
+```
+
+## تشغيل لوحة الإدارة
+```bash
+cd admin-web
+npm install
+npm run dev
+```
+
+## تشغيل تطبيق السائق (Expo)
 ```bash
 cd mobile-driver
 npm install
 npm run start
 ```
 
-## 5) حسابات تجريبية
-- Admin: `900000001 / Admin@1234`
-- Driver: `900000101 / Driver@1234`
+## إضافة Google Maps API Key
+ضع المفتاح في:
+```env
+VITE_GOOGLE_MAPS_API_KEY=YOUR_KEY
+```
+وعند عدم إضافته تظهر رسالة: `يرجى إضافة مفتاح Google Maps API في إعدادات البيئة`.
 
-## 6) أهم الـ APIs
-- `POST /auth/bootstrap-admin`
-- `POST /auth/login`
-- `POST /auth/register`
-- `POST /shifts/start`
-- `POST /shifts/{shift_id}/end`
-- `POST /shifts/active/locations`
-- `POST /visits`
-- `GET /visits/mine`
-- `POST /visits/{visit_id}/check-in`
-- `POST /visits/{visit_id}/check-out`
-- `GET /admin/drivers/live`
-- `GET /admin/route-history/{driver_id}?day=YYYY-MM-DD`
-- `GET /admin/alerts`
-- `GET /admin/audit-trail`
-- `GET /admin/reports/overview`
+## سيناريو اختبار كامل
+1) تسجيل دخول Admin من لوحة الإدارة
+2) إنشاء/اعتماد سائق وزيارات
+3) تسجيل دخول السائق من التطبيق
+4) بدء الوردية
+5) التحقق من وصول نقاط GPS إلى `/shifts/active/locations`
+6) تنفيذ check-in/check-out
+7) رفع صورة إثبات
+8) إدخال ملاحظة
+9) إنهاء الوردية
+10) مراجعة مسار السائق في صفحة `مسار السائقين`
+11) تجربة playback بسرعات 1x/2x/4x
+12) مراجعة التنبيهات والإشعارات
+13) تصدير PDF من صفحة التقارير
 
-## 7) حوكمة وامتثال
-- كل حدث تشغيلي حرج يُكتب في `audit_logs`.
-- تطبيق الصلاحيات حسب الدور على مستوى الـ API.
-- منع التتبع خارج الورديات النشطة.
-- إمكانية مراجعة الأحداث والزيارات والتنبيهات للتحكم الداخلي.
+## اختبار التنبيهات
+- **Delay**: Check-in بعد 15 دقيقة من planned time
+- **Route deviation**: check-in بعيد > 1 كم عن إحداثية الزيارة المخططة
+- **Long stop**: بطء الحركة لفترة طويلة أثناء الوردية
+- **Missed visit**: زيارة بقيت planned/delayed بعد threshold
 
-## 8) النشر الإنتاجي
-- ضع API خلف reverse proxy (Nginx/Traefik).
-- فعّل TLS وشهادات صحيحة.
-- استخدم managed PostgreSQL مع نسخ احتياطي.
-- فعّل مراقبة (Prometheus/Grafana) وlog aggregation.
-- أضف queue (Redis streams/Kafka) عند الأحمال الضخمة.
+## افتراضات منطق التحليل
+- stop radius = 50m
+- minimum stop duration = 5min
+- delay threshold = 15min
+- route deviation threshold = 1km من إحداثية الزيارة
+
+## نقاط الامتثال التشغيلي
+- جميع الأحداث الحساسة تُكتب في audit trail
+- كل العمليات مرتبطة بزمن وفاعل
+- الزيارات تشمل مخطط مقابل فعلي
+- تتبع السائق محصور داخل الوردية النشطة

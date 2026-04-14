@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
 import api from '../api/client';
+import { stopBackgroundTracking } from '../services/locationService';
 
 const AuthContext = createContext(null);
 
@@ -13,7 +14,8 @@ export function AuthProvider({ children }) {
     return data;
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await stopBackgroundTracking();
     setToken(null);
     delete api.defaults.headers.common.Authorization;
   };

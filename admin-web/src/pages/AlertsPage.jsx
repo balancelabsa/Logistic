@@ -1,7 +1,5 @@
 import { useEffect, useState } from 'react'
-import axios from 'axios'
-
-const api = axios.create({ baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000' })
+import api from '../api/client'
 
 export default function AlertsPage() {
   const [alerts, setAlerts] = useState([])
@@ -12,11 +10,13 @@ export default function AlertsPage() {
   return (
     <section>
       <h1>التنبيهات</h1>
-      <ul>
-        {alerts.map((a) => (
-          <li key={a.id}>{a.type} - {a.message}</li>
-        ))}
-      </ul>
+      {alerts.length === 0 && <p>لا توجد تنبيهات</p>}
+      <table>
+        <thead><tr><th>النوع</th><th>الشدة</th><th>الرسالة</th><th>الوقت</th></tr></thead>
+        <tbody>
+          {alerts.map((a) => <tr key={a.id}><td>{a.type}</td><td>{a.severity}</td><td>{a.message}</td><td>{a.created_at}</td></tr>)}
+        </tbody>
+      </table>
     </section>
   )
 }
